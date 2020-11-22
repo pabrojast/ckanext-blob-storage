@@ -9,7 +9,7 @@ from .download_handler import download_handler
 from .interfaces import IResourceDownloadHandler
 
 
-class ExternalStoragePlugin(plugins.SingletonPlugin):
+class BlobStoragePlugin(plugins.SingletonPlugin):
     plugins.implements(plugins.IConfigurer)
     plugins.implements(plugins.ITemplateHelpers)
     plugins.implements(plugins.IBlueprint)
@@ -22,7 +22,7 @@ class ExternalStoragePlugin(plugins.SingletonPlugin):
     def update_config(self, config):
         toolkit.add_template_directory(config, 'templates')
         toolkit.add_public_directory(config, 'public')
-        toolkit.add_resource('fanstatic', 'external-storage')
+        toolkit.add_resource('fanstatic', 'blob-storage')
 
     # ITemplateHelpers
 

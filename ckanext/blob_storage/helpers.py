@@ -1,10 +1,10 @@
-"""Template helpers for ckanext-external-storage
+"""Template helpers for ckanext-blob-storage
 """
 from typing import Optional
 
 import ckan.plugins.toolkit as toolkit
 
-SERVER_URL_CONF_KEY = 'ckanext.external_storage.storage_service_url'
+SERVER_URL_CONF_KEY = 'ckanext.blob_storage.storage_service_url'
 
 
 def resource_storage_prefix(package_name, org_name=None):
@@ -55,7 +55,7 @@ def server_url():
 
 
 def lfs_url():
-    return toolkit.config.get('ckanext.external_storage.storage_service_url')
+    return toolkit.config.get('ckanext.blob_storage.storage_service_url')
 
 
 def organization_name(package_name=None):

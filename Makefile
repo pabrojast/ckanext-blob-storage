@@ -1,7 +1,7 @@
-# Makefile for ckanext-versions
+# Makefile for ckanext-blob-storage
 
-PACKAGE_DIR := ckanext/external_storage
-PACKAGE_NAME := ckanext.external_storage
+PACKAGE_DIR := ckanext/blob_storage
+PACKAGE_NAME := ckanext.blob_storage
 
 SHELL := bash
 PYTHON := python
@@ -36,7 +36,7 @@ CKAN_SOLR_PASSWORD := ckan
 DATASTORE_DB_NAME := datastore
 DATASTORE_DB_RO_USER := datastore_ro
 DATASTORE_DB_RO_PASSWORD := datastore_ro
-CKAN_LOAD_PLUGINS := external_storage authz_service stats text_view image_view recline_view datastore
+CKAN_LOAD_PLUGINS := blob_storage authz_service stats text_view image_view recline_view datastore
 
 CKAN_CONFIG_VALUES := \
 		ckan.site_url=$(CKAN_SITE_URL) \
@@ -46,7 +46,7 @@ CKAN_CONFIG_VALUES := \
 		ckan.plugins='$(CKAN_LOAD_PLUGINS)' \
 		ckan.storage_path='%(here)s/storage' \
 		solr_url=http://127.0.0.1:8983/solr/ckan \
-		ckanext.external_storage.storage_service_url=http://localhost:9419 \
+		ckanext.blob_storage.storage_service_url=http://localhost:9419 \
 		ckanext.authz_service.jwt_algorithm=HS256 \
 		ckanext.authz_service.jwt_private_key=this-is-a-test-only-key \
 		ckanext.authz_service.jwt_include_user_email=true
