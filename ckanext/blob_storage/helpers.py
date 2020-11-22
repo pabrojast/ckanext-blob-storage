@@ -8,7 +8,7 @@ SERVER_URL_CONF_KEY = 'ckanext.blob_storage.storage_service_url'
 
 
 def resource_storage_prefix(package_name, org_name=None):
-    # type: (str) -> str
+    # type: (str, Optional[str]) -> str
     """Get the resource storage prefix for a package name
     """
     if org_name is None:
@@ -33,7 +33,7 @@ def resource_storage_prefix(package_name, org_name=None):
 
 
 def resource_authz_scope(package_name, actions=None, org_name=None):
-    # type: (str, Optional[str]) -> str
+    # type: (str, Optional[str], Optional[str]) -> str
     """Get the authorization scope for package resources
     """
     if actions is None:

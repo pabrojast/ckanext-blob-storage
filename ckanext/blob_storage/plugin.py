@@ -27,11 +27,11 @@ class BlobStoragePlugin(plugins.SingletonPlugin):
     # ITemplateHelpers
 
     def get_helpers(self):
-        return {'extstorage_server_url': helpers.server_url,
-                'extstorage_resource_authz_scope': helpers.resource_authz_scope,
-                'extstorage_resource_storage_prefix': helpers.resource_storage_prefix,
-                'extstorage_lfs_url': helpers.lfs_url,
-                'extstorage_organization_name': helpers.organization_name}
+        return {'blob_storage_server_url': helpers.server_url,
+                'blob_storage_resource_authz_scope': helpers.resource_authz_scope,
+                'blob_storage_resource_storage_prefix': helpers.resource_storage_prefix,
+                'blob_storage_lfs_url': helpers.lfs_url,
+                'blob_storage_organization_name': helpers.organization_name}
 
     # IBlueprint
 
