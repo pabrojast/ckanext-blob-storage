@@ -24,6 +24,8 @@ from werkzeug.wsgi import FileWrapper
 from ckanext.external_storage import helpers
 from ckanext.external_storage.download_handler import call_download_handlers
 
+from six.moves.urllib.parse import urlparse
+
 
 def _log():
     return logging.getLogger(__name__)
@@ -130,6 +132,11 @@ def update_storage_props(resource, lfs_props):
     # type: (Resource, Dict[str, Any]) -> None
     """Update the resource with new storage properties
     """
+    if resource.url_type == 'file_uploader_ui':
+        if resource.url.startswith('http'):
+            url_path = urlparse(resource.url).path
+            resource.url = os.path.basename(url_path)
+        resource.url_type = 'upload'
     resource.extras['lfs_prefix'] = lfs_props['lfs_prefix']
     resource.extras['sha256'] = lfs_props['sha256']
     resource.size = lfs_props['size']
@@ -225,7 +232,7 @@ def get_unmigrated_resources():
     session = Session()
     session.revisioning_disabled = True
     resources = session.query(Resource).filter(
-        Resource.url_type == 'upload',
+        ((Resource.url_type == 'upload') | (Resource.url_type == 'file_uploader_ui')),
         Resource.state != 'deleted',
         or_(Resource.extras.notlike('%"lfs_prefix":%'), Resource.extras == None)  # noqa: E711
     )
