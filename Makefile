@@ -1,7 +1,7 @@
-# Makefile for ckanext-versions
+# Makefile for ckanext-blob-storage
 
-PACKAGE_DIR := ckanext/external_storage
-PACKAGE_NAME := ckanext.external_storage
+PACKAGE_DIR := ckanext/blob_storage
+PACKAGE_NAME := ckanext.blob_storage
 
 SHELL := bash
 PYTHON := python
@@ -20,6 +20,7 @@ SED := $(shell which gsed sed | head -n1)
 CKAN_CLI := $(shell which ckan | head -n1)
 
 TEST_INI_PATH := ./test.ini
+TEST_PATH :=
 SENTINELS := .make-status
 
 PYTHON_VERSION := $(shell $(PYTHON) -c 'import sys; print(sys.version_info[0])')
@@ -42,7 +43,7 @@ CKAN_SOLR_PASSWORD := ckan
 DATASTORE_DB_NAME := datastore
 DATASTORE_DB_RO_USER := datastore_ro
 DATASTORE_DB_RO_PASSWORD := datastore_ro
-CKAN_LOAD_PLUGINS := stats text_view image_view recline_view datastore authz_service external_storage
+CKAN_LOAD_PLUGINS := stats text_view image_view recline_view datastore authz_service blob_storage
 
 CKAN_CONFIG_VALUES := \
 		ckan.site_url=$(CKAN_SITE_URL) \
@@ -52,8 +53,8 @@ CKAN_CONFIG_VALUES := \
 		ckan.plugins='$(CKAN_LOAD_PLUGINS)' \
 		ckan.storage_path='%(here)s/storage' \
 		solr_url=http://127.0.0.1:8983/solr/ckan \
-		ckanext.external_storage.storage_service_url=http://localhost:9419 \
-		ckanext.external_storage.storage_namespace=my-ckan-ns \
+		ckanext.blob_storage.storage_service_url=http://localhost:9419 \
+		ckanext.blob_storage.storage_namespace=my-ckan-ns \
 		ckanext.authz_service.jwt_algorithm=HS256 \
 		ckanext.authz_service.jwt_private_key=this-is-a-test-only-key \
 		ckanext.authz_service.jwt_include_user_email=true
@@ -119,11 +120,12 @@ $(CKAN_PATH):
 	$(GIT) clone $(CKAN_REPO_URL) $@
 
 $(CKAN_CONFIG_FILE): $(SENTINELS)/ckan-installed $(SENTINELS)/develop | _check_virtualenv
-	$(PASTER) make-config --no-interactive ckan $(CKAN_CONFIG_FILE)
 ifdef CKAN_CLI
+	$(CKAN_CLI) generate config $(CKAN_CONFIG_FILE)
 	$(CKAN_CLI) config-tool $(CKAN_CONFIG_FILE) -s DEFAULT debug=true
 	$(CKAN_CLI) config-tool $(CKAN_CONFIG_FILE) $(CKAN_CONFIG_VALUES)
 else
+	$(PASTER) make-config --no-interactive ckan $(CKAN_CONFIG_FILE)
 	$(PASTER) --plugin=ckan config-tool $(CKAN_CONFIG_FILE) -s DEFAULT debug=true
 	$(PASTER) --plugin=ckan config-tool $(CKAN_CONFIG_FILE) $(CKAN_CONFIG_VALUES)
 endif
@@ -252,7 +254,8 @@ $(SENTINELS)/tests-passed: $(SENTINELS)/test-setup $(shell find $(PACKAGE_DIR) -
 		--ckan-ini=$(TEST_INI_PATH) \
 		--doctest-modules \
 		--ignore $(PACKAGE_DIR)/cli.py  \
-		$(PACKAGE_DIR)
+		-s \
+		$(PACKAGE_DIR)/$(TEST_PATH)
 	@touch $@
 
 # Help related variables and targets

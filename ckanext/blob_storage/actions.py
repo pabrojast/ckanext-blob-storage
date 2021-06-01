@@ -1,4 +1,4 @@
-"""External Storage API actions
+"""Blob Storage API actions
 """
 import ast
 import logging
@@ -18,11 +18,14 @@ def get_resource_download_spec(context, data_dict):
     """Get a signed URL from LFS server to download a resource
     """
     resource = _get_resource(context, data_dict)
+    activity_id = data_dict.get('activity_id')
+    inline = toolkit.asbool(data_dict.get('inline'))
+
     for k in ('lfs_prefix', 'sha256', 'size'):
         if k not in resource:
             return {}
 
-    return get_lfs_download_spec(context, resource)
+    return get_lfs_download_spec(context, resource, inline=inline, activity_id=activity_id)
 
 
 def get_lfs_download_spec(context,  # type: Dict[str, Any]
@@ -30,7 +33,9 @@ def get_lfs_download_spec(context,  # type: Dict[str, Any]
                           sha256=None,  # type: Optional[str]
                           size=None,  # type: Optional[int]
                           filename=None,  # type: Optional[str]
-                          storage_prefix=None  # type: Optional[str]
+                          storage_prefix=None,  # type: Optional[str]
+                          inline=False,  # type: Optional[bool]
+                          activity_id=None  # type: Optional[str]
                           ):  # type: (...) -> Dict[str, Any]
     """Get the LFS download spec (URL and headers) for a resource
 
@@ -51,10 +56,19 @@ def get_lfs_download_spec(context,  # type: Dict[str, Any]
         filename = helpers.resource_filename(resource)
 
     package = toolkit.get_action('package_show')(context, {'id': resource['package_id']})
-    authz_token = get_download_authz_token(context, package['organization']['name'], package['name'], resource['id'])
+    authz_token = get_download_authz_token(
+        context,
+        package['organization']['name'],
+        package['name'],
+        resource['id'],
+        activity_id=activity_id)
     client = context.get('download_lfs_client', LfsClient(helpers.server_url(), authz_token))
 
     resources = [{"oid": sha256, "size": size, "x-filename": filename}]
+
+    if inline:
+        resources[0]["x-disposition"] = "inline"
+
     object_spec = _get_resource_download_lfs_objects(client, storage_prefix, resources)[0]
 
     assert object_spec['oid'] == sha256
@@ -114,15 +128,21 @@ def _get_resource_download_lfs_objects(client, lfs_prefix, resources):
     return batch_response['objects']
 
 
-def get_download_authz_token(context, org_name, package_name, resource_id):
-    # type: (Dict[str, Any], str, str, str) -> str
+def get_download_authz_token(context, org_name, package_name, resource_id, activity_id=None):
+    # type: (Dict[str, Any], str, str, str, str) -> str
     """Get an authorization token for getting the download URL from LFS
     """
     authorize = toolkit.get_action('authz_authorize')
     if not authorize:
         raise RuntimeError("Cannot find authz_authorize; Is ckanext-authz-service installed?")
 
-    scope = helpers.resource_authz_scope(package_name, org_name=org_name, actions='read', resource_id=resource_id)
+    scope = helpers.resource_authz_scope(
+        package_name,
+        org_name=org_name,
+        actions='read',
+        resource_id=resource_id,
+        activity_id=activity_id
+        )
     log.debug("Requesting authorization token for scope: %s", scope)
     authz_result = authorize(context, {"scopes": [scope]})
     if not authz_result or not authz_result.get('token', False):
