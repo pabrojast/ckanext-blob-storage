@@ -139,10 +139,17 @@ class BlobStoragePlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
         authorizer.register_authorizer('obj', authz.check_object_permissions,
                                        actions={'update', 'read'},
                                        subscopes=(None, 'data', 'metadata'))
+        # We need to register a custom check_resource_permissions in order to
+        # be able to download an old activity resource
+        # default one does not give the possibility to do so as it blocks the resource
+        # checking once it is not found in the current package activity
+        authorizer.register_authorizer('obj', authz.check_resource_permissions,
+                                       actions={'read'},
+                                       subscopes=(None, 'data', 'metadata'))
+
         authorizer.register_action_alias('write', 'update', 'obj')
         authorizer.register_scope_normalizer('obj', authz.normalize_object_scope)
 
     # IResourceDownloadHandler
-
     def resource_download(self, resource, package, filename=None, inline=False, activity_id=None):
         return download_handler(resource, package, filename, inline, activity_id)
