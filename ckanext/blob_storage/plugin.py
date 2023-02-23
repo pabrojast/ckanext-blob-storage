@@ -8,9 +8,11 @@ from . import actions, authz, helpers, validators
 from .blueprints import blueprint
 from .download_handler import download_handler
 from .interfaces import IResourceDownloadHandler
+from .storage import ResourceBlobStorage
 
 
 class BlobStoragePlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
+    plugins.implements(plugins.IUploader)
     plugins.implements(plugins.IConfigurer)
     plugins.implements(plugins.ITemplateHelpers)
     plugins.implements(plugins.IBlueprint)
@@ -19,6 +21,13 @@ class BlobStoragePlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
     plugins.implements(IResourceDownloadHandler, inherit=True)
     plugins.implements(plugins.IValidators)
     plugins.implements(plugins.IDatasetForm)
+
+    # IUploader
+    def get_resource_uploader(self, data_dict):
+        return ResourceBlobStorage(data_dict)
+
+    def get_uploader(self, upload_to, old_filename=None):
+        return None
 
     # IDatasetForm
     def create_package_schema(self):
@@ -31,7 +40,7 @@ class BlobStoragePlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
                 toolkit.get_validator('upload_has_sha256'),
                 toolkit.get_validator('upload_has_size'),
                 toolkit.get_validator('upload_has_lfs_prefix')
-                ],
+            ],
             'sha256': [
                 toolkit.get_validator('ignore_missing'),
                 toolkit.get_validator('valid_sha256')
@@ -57,7 +66,7 @@ class BlobStoragePlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
                 toolkit.get_validator('upload_has_sha256'),
                 toolkit.get_validator('upload_has_size'),
                 toolkit.get_validator('upload_has_lfs_prefix')
-                ],
+            ],
             'sha256': [
                 toolkit.get_validator('ignore_missing'),
                 toolkit.get_validator('valid_sha256')
@@ -109,7 +118,7 @@ class BlobStoragePlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
             'blob_storage_server_url': helpers.server_url,
             'blob_storage_storage_namespace': helpers.storage_namespace,
             'ckan_29_or_higher': plugins.toolkit.check_ckan_version(min_version='2.9.0')
-          }
+        }
 
     # IBlueprint
 
