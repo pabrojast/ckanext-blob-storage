@@ -1,19 +1,12 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-import cgi
-from datetime import datetime
-
-from ckan import model
-from ckan.lib import munge
-from .download_handler import download_handler
+from ckan.lib.uploader import ResourceUpload
 
 
-class ResourceBlobStorage(object):
+class ResourceBlobStorage:
     def __init__(self, resource):
-        super(ResourceBlobStorage, self).__init__()
+        self.delegate = ResourceUpload(resource)
 
     def get_path(self, id):
-        return download_handler(id)
+        return self.delegate.get_path(id)
 
     def upload(self, id, max_size):
-        return None
+        return self.delegate.upload(id, max_size)
