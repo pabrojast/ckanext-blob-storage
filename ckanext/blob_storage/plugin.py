@@ -8,7 +8,7 @@ from . import actions, authz, helpers, validators
 from .blueprints import blueprint
 from .download_handler import download_handler
 from .interfaces import IResourceDownloadHandler
-from .storage import ResourceBlobStorage
+from .storage import DummyUploader
 
 
 class BlobStoragePlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
@@ -22,9 +22,9 @@ class BlobStoragePlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
     plugins.implements(plugins.IValidators)
     plugins.implements(plugins.IDatasetForm)
 
-    # IUploader
+    # dummy implementation of IUploader
     def get_resource_uploader(self, data_dict):
-        return ResourceBlobStorage(data_dict)
+        return DummyUploader(data_dict)
 
     def get_uploader(self, upload_to, old_filename=None):
         return None
