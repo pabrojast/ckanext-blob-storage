@@ -8,7 +8,7 @@ from . import actions, authz, helpers, validators
 from .blueprints import blueprint
 from .download_handler import download_handler
 from .interfaces import IResourceDownloadHandler
-from .storage import DummyUploader
+from .uploader import DummyUploader
 
 
 class BlobStoragePlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
