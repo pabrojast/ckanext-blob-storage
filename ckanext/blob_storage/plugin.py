@@ -22,7 +22,7 @@ class BlobStoragePlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
     plugins.implements(plugins.IValidators)
     plugins.implements(plugins.IDatasetForm)
 
-    # dummy implementation of IUploader
+    # IUploader
     def get_resource_uploader(self, data_dict):
         return DummyUploader(data_dict)
 
