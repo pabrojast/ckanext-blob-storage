@@ -2,13 +2,24 @@
 from setuptools import setup, find_packages  # Always prefer setuptools over distutils
 from codecs import open  # To use a consistent encoding
 from os import path
+import io
+import re
 
-import ckanext.blob_storage
-
-here = path.abspath(path.dirname(__file__))
+# Extract version
+HERE = os.path.abspath(os.path.dirname(__file__))
+INIT_PY = os.path.join(HERE, 'ckanext', 'blob_storage', '__init__.py')
+version = None
+with io.open(INIT_PY) as f:
+    for line in f:
+        m = re.match(r'__version__\s*=\s*u?[\'"](.*)[\'"]', line)
+        if m:
+            version = m.groups()[0]
+            break
+if version is None:
+    raise RuntimeError('Could not extract version from "{}".'.format(INIT_PY))
 
 # Get the long description from the relevant file
-with open(path.join(here, 'README.md'), encoding='utf-8') as f:
+with open(path.join(HERE, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
@@ -17,7 +28,7 @@ setup(
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # http://packaging.python.org/en/latest/tutorial.html#version
-    version=ckanext.blob_storage.__version__,
+    version=version,
 
     description='''Store CKAN data files using an external Git LFS based storage microservice''',
     long_description=long_description,
