@@ -45,7 +45,13 @@ class MigrateResourcesCommand(CkanCommand):
         with app_context() as context:
             context.g.user = self.site_user['name']
             context.g.userobj = self._user
-            self.migrate_all_resources()
+            
+            # Nuevo argumento para determinar si migrar desde bucket
+            if len(self.args) > 0 and self.args[0] == '--from-bucket':
+                bucket_url = self.args[1] if len(self.args) > 1 else None
+                self.migrate_from_bucket(bucket_url)
+            else:
+                self.migrate_all_resources()
 
     def migrate_all_resources(self):
         """Do the actual migration
@@ -83,6 +89,74 @@ class MigrateResourcesCommand(CkanCommand):
             _log().debug("Upload complete; sha256=%s, size=%d", props['sha256'], props['size'])
 
         update_storage_props(resource_obj, props)
+
+    def migrate_from_bucket(self, bucket_base_url=None):
+        """Migrar recursos que están en un bucket externo
+        
+        Args:
+            bucket_base_url: URL base del bucket (opcional). Si no se proporciona,
+                             se asume que la URL completa del recurso está en resource.url
+        """
+        migrated = 0
+        for resource_obj in get_unmigrated_resources():
+            # Si el recurso ya tiene un formato correcto de URL, podríamos saltarlo
+            # o verificar específicamente que es un recurso del bucket
+            
+            _log().info("Starting to migrate resource from bucket %s [%s]", resource_obj.id, resource_obj.name)
+            failed = 0
+            while failed < self._max_failures:
+                try:
+                    self.migrate_resource_from_bucket(resource_obj, bucket_base_url)
+                    _log().info("Finished migrating resource %s from bucket", resource_obj.id)
+                    migrated += 1
+                    break
+                except Exception:
+                    _log().exception("Failed to migrate resource %s from bucket, retrying...", resource_obj.id)
+                    failed += 1
+                    time.sleep(self._retry_delay)
+            else:
+                _log().error("Skipping bucket resource %s [%s] after %d failures", 
+                             resource_obj.id, resource_obj.name, failed)
+                
+        _log().info("Finished migrating %d resources from bucket", migrated)
+        
+    def migrate_resource_from_bucket(self, resource_obj, bucket_base_url):
+        """Migrar un recurso específico desde el bucket"""
+        dataset, resource_dict = get_resource_dataset(resource_obj)
+        resource_name = helpers.resource_filename(resource_dict)
+        
+        # Construir la URL completa del recurso en el bucket
+        if bucket_base_url:
+            # Adaptación para estructuras de bucket con formato /resources/{resource_id}/{filename}
+            resource_url = f"{bucket_base_url.rstrip('/')}/resources/{resource_obj.id}/{resource_dict['url']}"
+        else:
+            # Usar la URL tal como está (asumiendo que ya es una URL completa)
+            resource_url = resource_dict['url']
+            
+        _log().debug("Resource URL in bucket: %s", resource_url)
+        
+        # Descargar el archivo del bucket a un archivo temporal
+        resource_file = tempfile.mktemp(prefix='ckan-blob-migration-')
+        try:
+            _log().debug("Downloading resource from bucket to %s", resource_file)
+            download_remote_resource(resource_url, resource_file)
+            
+            # Subir el archivo al almacenamiento LFS
+            _log().debug("Starting to upload file: %s", resource_file)
+            lfs_namespace = helpers.storage_namespace()
+            props = self.upload_resource(resource_file, dataset['id'], lfs_namespace, resource_name)
+            props['lfs_prefix'] = '{}/{}'.format(lfs_namespace, dataset['id'])
+            props['sha256'] = props.pop('oid')
+            _log().debug("Upload complete; sha256=%s, size=%d", props['sha256'], props['size'])
+            
+            # Actualizar los metadatos del recurso
+            update_storage_props(resource_obj, props)
+        finally:
+            try:
+                os.unlink(resource_file)
+            except OSError as e:
+                if e.errno != errno.ENOENT:
+                    raise
 
     def upload_resource(self, resource_file, dataset_id, lfs_namespace, filename):
         # type: (str, str, str, str) -> ObjectAttributes
@@ -180,6 +254,11 @@ def _save_redirected_response_data(response, file_name):
     """
     resource_url = response.headers['Location']
     _log().debug("Resource is at %s, downloading ...", resource_url)
+    download_remote_resource(resource_url, file_name)
+
+
+def download_remote_resource(resource_url, file_name):
+    """Download a remote resource and save it to a local file"""
     with requests.get(resource_url, stream=True) as source, open(file_name, 'wb') as dest:
         source.raise_for_status()
         _log().debug("Resource downloading, HTTP status code is %d, Content-type is %s",
