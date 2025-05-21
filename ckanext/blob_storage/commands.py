@@ -1,6 +1,6 @@
 import click
 import sys
-from .cli import MigrateResourcesCommand
+# Don't import from .cli which uses the deprecated CkanCommand
 
 @click.group(name='blob-storage', short_help='Blob storage commands')
 def blob_storage():
@@ -16,6 +16,9 @@ def migrate(from_bucket, bucket_url):
     If --from-bucket is specified, resources will be migrated from the specified bucket URL.
     Otherwise, resources will be migrated from the CKAN upload directory.
     """
+    # Import here to avoid circular imports
+    from .cli import MigrateResourcesCommand
+    
     # Create an instance of the existing command class
     command = MigrateResourcesCommand(None)
     
