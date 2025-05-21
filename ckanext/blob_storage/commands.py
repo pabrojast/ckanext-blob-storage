@@ -240,21 +240,29 @@ def migrate(from_bucket, bucket_url):
         update_storage_props(resource_obj, props)
         
     def migrate_resource_from_bucket(resource_obj, bucket_base_url):
-        """Migrar un recurso específico desde el bucket"""
+        """Migrate a specific resource from the bucket"""
         dataset, resource_dict = get_resource_dataset(resource_obj)
         resource_name = helpers.resource_filename(resource_dict)
         
-        # Construir la URL completa del recurso en el bucket
+        # Construct the full resource URL in the bucket
         if bucket_base_url:
-            # Adaptación para estructuras de bucket con formato /resources/{resource_id}/{filename}
-            resource_url = f"{bucket_base_url.rstrip('/')}/resources/{resource_obj.id}/{resource_dict['url']}"
+            # Check if resource URL is already a full URL and extract just the filename
+            if resource_dict['url'].startswith('http'):
+                # Extract just the filename from the full URL
+                import os
+                from urllib.parse import urlparse
+                filename = os.path.basename(urlparse(resource_dict['url']).path)
+                resource_url = f"{bucket_base_url.rstrip('/')}/resources/{resource_obj.id}/{filename}"
+            else:
+                # Use the resource URL as a relative path
+                resource_url = f"{bucket_base_url.rstrip('/')}/resources/{resource_obj.id}/{resource_dict['url']}"
         else:
-            # Usar la URL tal como está (asumiendo que ya es una URL completa)
+            # Use the URL as is (assuming it's already a complete URL)
             resource_url = resource_dict['url']
             
         log.debug("Resource URL in bucket: %s", resource_url)
         
-        # Descargar el archivo del bucket a un archivo temporal
+        # Download the file from the bucket to a temporary file
         resource_file = tempfile.mktemp(prefix='ckan-blob-migration-')
         try:
             log.debug("Downloading resource from bucket to %s", resource_file)
