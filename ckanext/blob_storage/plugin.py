@@ -4,7 +4,7 @@ import ckan.plugins.toolkit as toolkit
 from ckanext.authz_service.authzzie import Authzzie
 from ckanext.authz_service.interfaces import IAuthorizationBindings
 
-from . import actions, authz, helpers, validators
+from . import actions, authz, helpers, validators, commands
 from .blueprints import blueprint
 from .download_handler import download_handler
 from .interfaces import IResourceDownloadHandler
@@ -21,6 +21,7 @@ class BlobStoragePlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
     plugins.implements(IResourceDownloadHandler, inherit=True)
     plugins.implements(plugins.IValidators)
     plugins.implements(plugins.IDatasetForm)
+    plugins.implements(plugins.IClick)
 
     # IUploader
     def get_resource_uploader(self, data_dict):
@@ -162,3 +163,7 @@ class BlobStoragePlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
     # IResourceDownloadHandler
     def resource_download(self, resource, package, filename=None, inline=False, activity_id=None):
         return download_handler(resource, package, filename, inline, activity_id)
+
+    # IClick
+    def get_commands(self):
+        return commands.get_commands()
