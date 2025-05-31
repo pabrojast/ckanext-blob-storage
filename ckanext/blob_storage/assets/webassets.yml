@@ -9,5 +9,5 @@ blob-storage-js:
   output: ckanext-blob-storage/%(version)s_blob_storage.js
   contents:
     - js/runtime-main.c155da57.js
-    - js/2.11fb1259.chunk.js
-    - js/main.dbe9b26c.chunk.js
+    - js/2.548238af.chunk.js
+    - js/main.df5d25a3.chunk.js
