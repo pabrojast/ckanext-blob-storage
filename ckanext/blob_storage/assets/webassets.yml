@@ -2,12 +2,12 @@ blob-storage-css:
   filter: cssrewrite
   output: ckanext-blob-storage/%(version)s_blob_storage.css
   contents:
-    - css/main.3c074c8b.chunk.css
+    - css/main.5d520fbf.chunk.css
 
 blob-storage-js:
   filter: rjsmin
   output: ckanext-blob-storage/%(version)s_blob_storage.js
   contents:
     - js/runtime-main.c155da57.js
-    - js/2.ce231549.chunk.js
-    - js/main.02170699.chunk.js
+    - js/2.c85ef838.chunk.js
+    - js/main.3168ae60.chunk.js
